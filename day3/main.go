@@ -6,28 +6,13 @@ import (
 	"io"
 	"log"
 	"os"
+
+	"github.com/trinitroglycerin/aoc2021/pkg/bitset"
 )
 
 const (
 	ONE uint8 = 49
 )
-
-func reconstituteUint(bits []bool) uint {
-	var o uint
-	shift := len(bits) - 1
-	for _, bit := range bits {
-		var b uint8
-		if bit == true {
-			b = 1
-		}
-
-		shifted := uint(b) << shift
-		o |= shifted
-		shift--
-	}
-
-	return o
-}
 
 func main() {
 	r := bufio.NewReader(os.Stdin)
@@ -57,17 +42,17 @@ func main() {
 	}
 
 	half := lines / 2
-	gammaBits := make([]bool, len(oneCounts))
-	epsilonBits := make([]bool, len(oneCounts))
+	gammaBits := bitset.NewBitSet(len(oneCounts))
+	epsilonBits := bitset.NewBitSet(len(oneCounts))
 	for idx, count := range oneCounts {
 		if count > half {
-			gammaBits[idx] = true
+			gammaBits.Set(idx)
 		} else {
-			epsilonBits[idx] = true
+			epsilonBits.Set(idx)
 		}
 	}
 
-	gamma := reconstituteUint(gammaBits)
-	epsilon := reconstituteUint(epsilonBits)
+	gamma := gammaBits.Uint()
+	epsilon := epsilonBits.Uint()
 	println(gamma * epsilon)
 }
