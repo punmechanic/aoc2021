@@ -6,16 +6,22 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Board [5][5]uint
 
-func visitLines(r *bufio.Reader, visitor func(line []byte)) error {
+func visitLines(r *bufio.Reader, visitor func(line []byte) error) error {
 	for {
-		_, _, err := r.ReadLine()
+		line, _, err := r.ReadLine()
 		if errors.Is(err, io.EOF) {
 			break
 		} else if err != nil {
+			return err
+		}
+
+		if err := visitor(line); err != nil {
 			return err
 		}
 	}
@@ -29,11 +35,30 @@ type bingoGameReader struct {
 	Boards       []Board
 }
 
+func (st *bingoGameReader) readSequence(line []byte) error {
+	for _, substr := range strings.Split(string(line), ",") {
+		digit, err := strconv.ParseUint(substr, 10, 16)
+		if err != nil {
+			return err
+		}
+
+		st.Sequence = append(st.Sequence, uint(digit))
+	}
+
+	return nil
+}
+
 func (st *bingoGameReader) Read(r io.Reader) error {
 	br := bufio.NewReader(r)
+	return visitLines(br, func(line []byte) error {
+		if !st.sequenceRead {
+			if err := st.readSequence(line); err != nil {
+				return err
+			}
+			st.sequenceRead = true
+		}
 
-	return visitLines(br, func(line []byte) {
-		// TODO: Load game here
+		return nil
 	})
 }
 

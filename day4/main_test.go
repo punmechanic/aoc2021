@@ -47,7 +47,9 @@ func TestCanLoadGame(t *testing.T) {
 	}
 
 	for idx, n := range r.Sequence {
-		t.Errorf("incorrect sequence number at sequence[%d] - expected %d, got %d", idx, expectedSeq[idx], n)
+		if n != expectedSeq[idx] {
+			t.Errorf("incorrect sequence number at sequence[%d] - expected %d, got %d", idx, expectedSeq[idx], n)
+		}
 	}
 
 	if len(r.Boards) != len(expectedBoards) {
