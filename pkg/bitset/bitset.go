@@ -3,7 +3,10 @@ package bitset
 const one rune = '1'
 
 // MostCommon returns a BitSet that represents the most common bits in the given slice of BitSets.
+//
 // For example, a slice containing BitSets 1001, 1100, 1011 and 0001 would return the BitSet 1001.
+// If there is a tie for a particular bit position, MostCommon will prefer 1s to 0s.
+//
 // The size of the ultimate BitSet is based on the size of the first in the slice; each bitset should be aligned.
 // The behaviour of a slice of unaligned bitsets is undefined.
 func MostCommon(sets []BitSet) BitSet {
@@ -20,7 +23,7 @@ func MostCommon(sets []BitSet) BitSet {
 	bs := NewBitSet(bitLen)
 	half := len(sets) / 2
 	for idx, count := range oneCounts {
-		if count > half {
+		if count >= half {
 			bs.Set(idx)
 		}
 	}
