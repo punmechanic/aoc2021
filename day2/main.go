@@ -13,7 +13,7 @@ import (
 func main() {
 	r := bufio.NewReader(os.Stdin)
 
-	var depth, hpos int64
+	var depth, hpos, aim int64
 	for {
 		line, _, err := r.ReadLine()
 		if errors.Is(err, io.EOF) {
@@ -31,10 +31,11 @@ func main() {
 		switch parts[0] {
 		case "forward":
 			hpos += v
+			depth += (aim * v)
 		case "down":
-			depth += v
+			aim += v
 		case "up":
-			depth -= v
+			aim -= v
 		default:
 			log.Fatalf("unrecognised direction %q\n", parts[0])
 		}
