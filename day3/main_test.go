@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	_ "embed"
-	"io"
 	"strings"
 	"testing"
 
@@ -13,19 +12,18 @@ import (
 //go:embed test1.txt
 var inputs string
 
-func findCO2ScrubberRating(r io.Reader) (uint, error) {
-	return 0, nil
+func requireSets(t *testing.T) []bitset.BitSet {
+	sets, err := fromReader(bufio.NewReader(strings.NewReader(inputs)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return sets
 }
 
 func TestGammaAndEpsilon(t *testing.T) {
-	r := bufio.NewReader(strings.NewReader(inputs))
-	sets, err := fromReader(r)
-	if err != nil {
-		t.Errorf("failed to read BitSets: %s", err)
-	}
-
+	sets := requireSets(t)
 	gammaBits := bitset.MostCommon(sets)
-
 	if gammaBits.Uint() != 0b10110 {
 		t.Errorf("gamma was %#05b, expected 0b10110", gammaBits.Uint())
 	}
@@ -36,29 +34,16 @@ func TestGammaAndEpsilon(t *testing.T) {
 }
 
 func TestFindOxygenGeneratorRating(t *testing.T) {
-	r := bufio.NewReader(strings.NewReader(inputs))
-	sets, err := fromReader(r)
-	if err != nil {
-		t.Errorf("failed to read BitSets: %s", err)
-	}
-
-	oxy, err := findOxygenGeneratorRating(sets)
-	if err != nil {
-		t.Errorf("failed to find oxygen generator rating: %s", err)
-	}
-
+	sets := requireSets(t)
+	oxy := findOxygenGeneratorRating(sets)
 	if oxy != 23 {
 		t.Errorf("oxy was %d, expected %d", oxy, 23)
 	}
 }
 
 func TestFindCO2ScrubberRating(t *testing.T) {
-	r := strings.NewReader(inputs)
-	co2, err := findCO2ScrubberRating(r)
-	if err != nil {
-		t.Errorf("failed to find CO2 scrubber rating: %s", err)
-	}
-
+	sets := requireSets(t)
+	co2 := findCO2ScrubberRating(sets)
 	if co2 != 10 {
 		t.Errorf("co2 was %d, expected %d", co2, 10)
 	}
