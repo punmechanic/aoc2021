@@ -32,60 +32,11 @@ func fromReader(r lineReader) ([]bitset.BitSet, error) {
 }
 
 func findCO2ScrubberRating(sets []bitset.BitSet) uint {
-	// Determine the least common value in the current bit position, and keep only numbers with that bit in that position.
-	// If 0 and 1 are equally common, keep values with a 0 in the position being considered.
-	// This is similar to bitset.MostCommon but we gradually restrict the search list.
-	for i := 0; i < sets[0].BitLength(); i++ {
-		var ons, offs []bitset.BitSet
-
-		if len(sets) == 1 {
-			break
-		}
-
-		for _, set := range sets {
-			if set[i] {
-				ons = append(ons, set)
-			} else {
-				offs = append(offs, set)
-			}
-		}
-
-		if len(ons) >= len(offs) {
-			sets = offs
-		} else {
-			sets = ons
-		}
-	}
-
-	return sets[0].Uint()
+	return bitset.UniformZeroes(sets).Uint()
 }
 
 func findOxygenGeneratorRating(sets []bitset.BitSet) uint {
-	// Determine the most common value in the current bit position, and keep only numbers with that bit in that position.
-	// If 0 and 1 are equally common, keep values with a 1 in the position being considered.
-	// This is similar to bitset.MostCommon but we gradually restrict the search list.
-	for i := 0; i < sets[0].BitLength(); i++ {
-		var ons, offs []bitset.BitSet
-		if len(sets) == 1 {
-			break
-		}
-
-		for _, set := range sets {
-			if set[i] {
-				ons = append(ons, set)
-			} else {
-				offs = append(offs, set)
-			}
-		}
-
-		if len(ons) >= len(offs) {
-			sets = ons
-		} else {
-			sets = offs
-		}
-	}
-
-	return sets[0].Uint()
+	return bitset.Uniform(sets).Uint()
 }
 
 func findLifeSupportRating(sets []bitset.BitSet) uint {

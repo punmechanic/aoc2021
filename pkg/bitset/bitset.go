@@ -2,6 +2,60 @@ package bitset
 
 const one rune = '1'
 
+func uniform(sets []BitSet, tiebreaker func(a []BitSet, b []BitSet) []BitSet) BitSet {
+	for i := 0; i < sets[0].BitLength(); i++ {
+		var ons, offs []BitSet
+		if len(sets) == 1 {
+			break
+		}
+
+		for _, set := range sets {
+			if set[i] {
+				ons = append(ons, set)
+			} else {
+				offs = append(offs, set)
+			}
+		}
+
+		sets = tiebreaker(ons, offs)
+	}
+
+	return sets[0]
+}
+
+// Uniform attempts to find the most uniform BitSet from the provided set of sets.
+//
+// This differs from MostCommon by attempting to find the most uniform BitSet of the given sets rather than constructing a new BitSet to hold the most common bit.
+//
+// For example, with a set of BitSets with the following bits set:
+//
+//		0b1101 0b1001 0b0000 0b0010 0b0011
+//
+// The BitSet 0b0010 would be returned, because it has the most in common with the rest of the BitSets.
+// One can adjust the tie-breaking behaviour (which defaults to prefering 1s over 0s) by passing in a tie-breaking function in the optional argument.
+func Uniform(sets []BitSet) BitSet {
+	return uniform(sets, func(a []BitSet, b []BitSet) []BitSet {
+		if len(a) >= len(b) {
+			return a
+		} else {
+			return b
+		}
+	})
+}
+
+// UniformZeroes attempts to find the most uniform BitSet from the provided set of sets.
+//
+// This is similar to Uniform but prefers zeroes instead of ones, in the event of a tie.
+func UniformZeroes(sets []BitSet) BitSet {
+	return uniform(sets, func(a []BitSet, b []BitSet) []BitSet {
+		if len(a) >= len(b) {
+			return b
+		} else {
+			return a
+		}
+	})
+}
+
 // MostCommon returns a BitSet that represents the most common bits in the given slice of BitSets.
 //
 // For example, a slice containing BitSets 1001, 1100, 1011 and 0001 would return the BitSet 1001.
@@ -11,20 +65,17 @@ const one rune = '1'
 // The behaviour of a slice of unaligned bitsets is undefined.
 func MostCommon(sets []BitSet) BitSet {
 	bitLen := sets[0].BitLength()
-	oneCounts := make([]int, len(sets))
-	for _, set := range sets {
-		for i := 0; i < bitLen; i++ {
+	bs := NewBitSet(bitLen)
+	for i := 0; i < bitLen; i++ {
+		count := 0
+		for _, set := range sets {
 			if set[i] {
-				oneCounts[i]++
+				count++
 			}
 		}
-	}
 
-	bs := NewBitSet(bitLen)
-	half := len(sets) / 2
-	for idx, count := range oneCounts {
-		if count >= half {
-			bs.Set(idx)
+		if count >= len(sets)/2 {
+			bs.Set(i)
 		}
 	}
 
