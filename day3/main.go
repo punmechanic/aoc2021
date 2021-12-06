@@ -9,15 +9,19 @@ import (
 )
 
 const (
-	ZERO uint8 = 48
-	ONE  uint8 = 49
+	ONE uint8 = 49
 )
 
-func reconstituteUint(bits []uint8) uint {
+func reconstituteUint(bits []bool) uint {
 	var o uint
 	shift := len(bits) - 1
 	for _, bit := range bits {
-		shifted := uint(bit) << shift
+		var b uint8
+		if bit == true {
+			b = 1
+		}
+
+		shifted := uint(b) << shift
 		o |= shifted
 		shift--
 	}
@@ -53,13 +57,13 @@ func main() {
 	}
 
 	half := lines / 2
-	gammaBits := make([]uint8, len(oneCounts))
-	epsilonBits := make([]uint8, len(oneCounts))
+	gammaBits := make([]bool, len(oneCounts))
+	epsilonBits := make([]bool, len(oneCounts))
 	for idx, count := range oneCounts {
 		if count > half {
-			gammaBits[idx] = 1
+			gammaBits[idx] = true
 		} else {
-			epsilonBits[idx] = 1
+			epsilonBits[idx] = true
 		}
 	}
 
