@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 
 	"testing"
@@ -9,11 +10,12 @@ import (
 //go:embed test1.txt
 var inputs []byte
 
-type Board [5][5]uint
-
 func TestCanLoadGame(t *testing.T) {
-	var sequence []uint
-	var boards []Board
+	var r bingoGameReader
+
+	if err := r.Read(bytes.NewReader(inputs)); err != nil {
+		t.Fatalf("failed to read inputs: %s", err)
+	}
 
 	expectedSeq := []uint{7, 4, 9, 5, 11, 17, 23, 2, 0, 14, 21, 24, 10, 16, 13, 6, 15, 25, 12, 22, 18, 20, 8, 19, 3, 26, 1}
 	expectedBoards := []Board{
@@ -40,25 +42,25 @@ func TestCanLoadGame(t *testing.T) {
 		},
 	}
 
-	if len(sequence) != len(expectedSeq) {
-		t.Errorf("incorrect sequence length - expected %d, got %d", len(expectedSeq), len(sequence))
+	if len(r.Sequence) != len(expectedSeq) {
+		t.Errorf("incorrect sequence length - expected %d, got %d", len(expectedSeq), len(r.Sequence))
 	}
 
-	for idx, n := range sequence {
+	for idx, n := range r.Sequence {
 		t.Errorf("incorrect sequence number at sequence[%d] - expected %d, got %d", idx, expectedSeq[idx], n)
 	}
 
-	if len(boards) != len(expectedBoards) {
-		t.Errorf("incorrect number of boards - expected %d, got %d", len(expectedBoards), len(boards))
+	if len(r.Boards) != len(expectedBoards) {
+		t.Errorf("incorrect number of boards - expected %d, got %d", len(expectedBoards), len(r.Boards))
 	}
 
-	for boardIdx, board := range boards {
+	for boardIdx, board := range r.Boards {
 		expectedBoard := expectedBoards[boardIdx]
 		for rowIdx, row := range board {
 			expectedRow := expectedBoard[rowIdx]
 			for cellIdx, cell := range row {
 				expectedCell := expectedRow[cellIdx]
-				if len(boards) != len(expectedBoards) {
+				if len(r.Boards) != len(expectedBoards) {
 					t.Errorf("incorrect cell value at boards[%d][%d][%d] - expected %d, got %d", boardIdx, rowIdx, cellIdx, expectedCell, cell)
 				}
 			}
