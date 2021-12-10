@@ -11,6 +11,10 @@ type Node = uint8
 
 type Grid = [][]Node
 
+type Point struct {
+	X, Y int
+}
+
 func Read(r io.Reader) (Grid, error) {
 	var grid Grid
 	br := bufio.NewReader(r)
@@ -44,39 +48,104 @@ func Read(r io.Reader) (Grid, error) {
 	return grid, nil
 }
 
-func Get(grid Grid, rowIdx, cellIdx int) (Node, bool) {
-	if rowIdx > len(grid)-1 {
+func Get(grid Grid, pt Point) (Node, bool) {
+	if pt.Y < 0 || pt.X < 0 {
 		return 0, false
 	}
 
-	slice := grid[rowIdx]
-	if cellIdx > len(slice)-1 {
+	if pt.Y > len(grid)-1 {
 		return 0, false
 	}
 
-	return slice[cellIdx], true
+	slice := grid[pt.Y]
+	if pt.X > len(slice)-1 {
+		return 0, false
+	}
+
+	return slice[pt.X], true
 }
 
-func FindSiblingNodes(grid Grid, rowIdx, cellIdx int) []Node {
+func FindSiblingNodes(grid Grid, pt Point) []Node {
 	var siblings []Node
-	places := [][]int{
-		{rowIdx - 1, cellIdx},
-		{rowIdx + 1, cellIdx},
-		{rowIdx, cellIdx + 1},
-		{rowIdx, cellIdx - 1},
+	pts := []Point{
+		{X: pt.X, Y: pt.Y - 1},
+		{X: pt.X, Y: pt.Y + 1},
+		{X: pt.X - 1, Y: pt.Y},
+		{X: pt.X + 1, Y: pt.Y},
 	}
 
-	for _, place := range places {
-		rowIdx := place[0]
-		cellIdx := place[1]
-		if cellIdx < 0 || rowIdx < 0 {
+	for _, point := range pts {
+		if point.X < 0 || point.Y < 0 {
 			continue
 		}
 
-		if node, ok := Get(grid, rowIdx, cellIdx); ok {
+		if node, ok := Get(grid, point); ok {
 			siblings = append(siblings, node)
 		}
 	}
 
 	return siblings
+}
+
+// Spider finds siblings for _all_ nodes according to the predicate.
+func Spider(grid Grid, predicate func(prev, current Node) bool) [][]Node {
+	var ns [][]Node
+	for y, row := range grid {
+		for x := range row {
+			pt := Point{X: x, Y: y}
+			ns = append(ns, SpiderNodes(grid, pt, predicate))
+		}
+	}
+	return ns
+}
+
+// SpiderNodes functions similarly to FindSiblingNodes, but continues searching in each given direction until predicate returns false.
+func SpiderNodes(grid Grid, pt Point, predicate func(prev, current Node) bool) []Node {
+	worker := spiderWorker{
+		grid:      grid,
+		checked:   make(map[Point]struct{}),
+		predicate: predicate,
+	}
+
+	return worker.Spider(nil, pt)
+}
+
+type spiderWorker struct {
+	grid      Grid
+	checked   map[Point]struct{}
+	predicate func(prev, current Node) bool
+}
+
+func (w spiderWorker) Spider(initial *Node, pt Point) []Node {
+	if _, ok := w.checked[pt]; ok {
+		return nil
+	}
+
+	current, ok := Get(w.grid, pt)
+	if !ok {
+		return nil
+	}
+
+	if current == 9 {
+		return nil
+	}
+
+	if initial != nil && !w.predicate(*initial, current) {
+		return nil
+	}
+
+	nodes := []Node{current}
+	nodes = append(nodes, w.Spider(&current, Point{X: pt.X - 1, Y: pt.Y})...)
+	nodes = append(nodes, w.Spider(&current, Point{X: pt.X + 1, Y: pt.Y})...)
+	nodes = append(nodes, w.Spider(&current, Point{X: pt.X, Y: pt.Y - 1})...)
+	nodes = append(nodes, w.Spider(&current, Point{X: pt.X, Y: pt.Y + 1})...)
+
+	if len(nodes) > 1 {
+		// If we found at least one other Node, then we have found the 'basin' that this Node is a part of.
+		w.checked[pt] = struct{}{}
+		// However, if we found zero Nodes, that means that we have not yet found the basin for this Node.
+		// All Nodes must be part of at least ONE basin.
+	}
+
+	return nodes
 }
